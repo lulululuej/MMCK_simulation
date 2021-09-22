@@ -9,7 +9,8 @@
 
 int next_event_type, num_events, num_in_q;
 int num_of_server_idle, server_number, total_num_of_server;
-int num_delays_required, num_cus_delayed, num_cus_arrival, num_cus_blocked, num_cus_in_system, queue_size;
+int num_delays_required, num_cus_delayed, num_cus_in_system, queue_size;
+long double num_cus_arrival, num_cus_blocked;
 long double mean_inter_arr_time, mean_service_time, area_num_in_q, area_server_status, sim_time, time_arrival[10000], time_last_event, next_arrival_time, next_departure_time[10000], min_next_departure_time, total_of_delays;
 
 FILE *infile, *outfile;
@@ -64,6 +65,7 @@ int main() {
 void initialize(void){
     sim_time = 0.0;
     queue_size = num_cus_in_system - total_num_of_server;
+    printf("queue size : %d\n",queue_size);
     next_event_type = 0;
     num_cus_delayed = 0;
     num_in_q = 0;
@@ -132,8 +134,11 @@ void arrival(void){
         ++num_in_q;
         if (num_in_q > queue_size){
             ++num_cus_blocked;
+            --num_in_q;
         }
-        time_arrival[num_in_q] = sim_time; //remember time arrival in array
+        else{
+            time_arrival[num_in_q] = sim_time; //remember time arrival in array
+        }
     }
     else{ //there has an idle server
         delay = 0;
@@ -192,7 +197,9 @@ void report(void){
     //fprintf(outfile, "[Theo] Server utilization%8.3f \n",0.2667);
     fprintf(outfile, "[Expe] Server utilization%11.6Lf \n\n",area_server_status/sim_time/total_num_of_server);
     //fprintf(outfile, "[Theo] Block Rate%17.6d \n",);
-    fprintf(outfile, "[Expe] Block Rate%17.6d \n",num_cus_blocked/num_cus_arrival);
+    printf("num cus blocking : %Lf\n",num_cus_blocked);
+    printf("num cus arrival : %Lf\n",num_cus_arrival);
+    fprintf(outfile, "[Expe] Blocking Rate%20.16Lf \n",num_cus_blocked/num_cus_arrival);
     fprintf(outfile, "-----------------------------------------\n");
     fprintf(outfile, "Time simulation ended %12.3Lf minutes", sim_time);
 }
