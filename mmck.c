@@ -9,9 +9,11 @@
 
 int next_event_type, num_events, num_in_q;
 int num_of_server_idle, server_number, total_num_of_server;
+int num_in_system;
 int num_delays_required, num_cus_delayed, num_cus_in_system, queue_size;
 long double num_cus_arrival, num_cus_blocked;
-long double mean_inter_arr_time, mean_service_time, area_num_in_q, area_server_status, sim_time, time_arrival[10000], time_last_event, next_arrival_time, next_departure_time[10000], min_next_departure_time, total_of_delays;
+long double total_of_service_time;
+long double mean_inter_arr_time, mean_service_time, area_num_in_system, area_num_in_q, area_server_status, sim_time, time_arrival[10000], time_last_event, next_arrival_time, next_departure_time[10000], min_next_departure_time, total_of_delays;
 
 FILE *infile, *outfile;
 
@@ -69,10 +71,12 @@ void initialize(void){
     next_event_type = 0;
     num_cus_delayed = 0;
     num_in_q = 0;
+    num_in_system = 0;
     num_of_server_idle = total_num_of_server;
     area_num_in_q = 0.0;
     area_server_status = 0.0;
     server_number = 0;
+    total_of_service_time = 0.0;
     
     next_arrival_time = sim_time + exponential(mean_inter_arr_time);
     for(int i=1; i<=total_num_of_server; i++){
@@ -122,6 +126,7 @@ void update_time_avg_stats(void){
     time_since_last_event = sim_time - time_last_event;
     time_last_event = sim_time;
     
+    area_num_in_system += num_in_system * time_since_last_event;
     area_num_in_q += num_in_q * time_since_last_event;
     area_server_status += (total_num_of_server - num_of_server_idle) * time_since_last_event;
 }
@@ -130,11 +135,13 @@ void arrival(void){
     long double delay;
     ++num_cus_arrival;
     next_arrival_time = sim_time + exponential(mean_inter_arr_time);
+    ++num_in_system;
     if(num_of_server_idle == 0){
         ++num_in_q;
         if (num_in_q > queue_size){
             ++num_cus_blocked;
             --num_in_q;
+            --num_in_system;
         }
         else{
             time_arrival[num_in_q] = sim_time; //remember time arrival in array
@@ -149,6 +156,7 @@ void arrival(void){
         for(int i=1; i<=total_num_of_server;i++){
             if(next_departure_time[i] == 1.0e+30){
                 next_departure_time[i] = sim_time + exponential(mean_service_time); //setting the departure time for this server
+                total_of_service_time += (next_departure_time[i] - sim_time);
                 break;
             }
         }
@@ -158,10 +166,11 @@ void arrival(void){
 
 void departure(void){
     long double delay;
+    --num_in_system;
     if(num_in_q == 0){ //if there is no any customer in queue
         if(num_of_server_idle < total_num_of_server){ //server number initialize
             ++num_of_server_idle;
-        } 
+        }
         next_departure_time[server_number] = 1.0e+30;
     }
     else{ //there still has customers in queue and go into server
@@ -170,6 +179,7 @@ void departure(void){
         total_of_delays += delay;
         ++num_cus_delayed;
         next_departure_time[server_number] = sim_time + exponential(mean_service_time);
+        total_of_service_time += (next_departure_time[server_number] - sim_time);
         for(int i = 1; i<=num_in_q; i++){
             time_arrival[i] = time_arrival[i+1];
         }
@@ -191,9 +201,11 @@ void report(void){
     fprintf(outfile, "Queue capacity%17.3d\n", queue_size);
     fprintf(outfile, "-----------------------------------------\n");
     //fprintf(outfile, "[Theo] Avg delay in queue%8.4f minutes\n",0.023561);
-    fprintf(outfile, "[Expe] Avg delay in queue%11.6Lf minutes\n\n",total_of_delays/num_delays_required);
+    fprintf(outfile, "[Expe] Wq Avg delay in queue%11.6Lf minutes\n\n",total_of_delays/num_delays_required);
+    fprintf(outfile, "[Expe] W  Avg delay in system%11.6Lf minutes\n\n",(total_of_service_time+total_of_delays)/num_delays_required);
     //fprintf(outfile, "[Theo] Avg number in queue%7.4f \n",0.018921);
-    fprintf(outfile, "[Expe] Avg number in queue%10.6Lf \n\n",area_num_in_q/sim_time);
+    fprintf(outfile, "[Expe] Lq Avg number in queue%10.6Lf \n\n",area_num_in_q/sim_time);
+    fprintf(outfile, "[Expe] L Avg number in system%10.6Lf \n\n",area_num_in_system/sim_time);
     //fprintf(outfile, "[Theo] Server utilization%8.3f \n",0.2667);
     fprintf(outfile, "[Expe] Server utilization%11.6Lf \n\n",area_server_status/sim_time/total_num_of_server);
     //fprintf(outfile, "[Theo] Block Rate%17.6d \n",);

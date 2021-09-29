@@ -1,16 +1,20 @@
-Mean interarrival time      1.250 minutes
+Mean interarrival time      0.125 minutes
 Mean service time           1.000 minutes
-Number of customers      1000000000
-Number of servers           003
+Number of customers       100000000
+Number of servers           005
 System capacity             010
-Queue capacity              007
+Queue capacity              005
 -----------------------------------------
-[Expe] Avg delay in queue   0.023644 minutes
+[Expe] Wq Avg delay in queue   0.722252 minutes
 
-[Expe] Avg number in queue  0.018916 
+[Expe] W  Avg delay in system   1.722168 minutes
 
-[Expe] Server utilization   0.266671 
+[Expe] Lq Avg number in queue  3.565666 
 
-[Expe] Blocking Rate  0.0000036889863913 
+[Expe] L Avg number in system  8.502122 
+
+[Expe] Server utilization   0.987291 
+
+[Expe] Blocking Rate  0.3828666647305137 
 -----------------------------------------
-Time simulation ended 1249991304.071 minutes
+Time simulation ended 20255745.631 minutes
